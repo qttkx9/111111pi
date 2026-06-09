@@ -77,16 +77,17 @@ echo 已启动
 :menu
 echo.
 echo  1. 打开页面   2. 停止   3. 换端口   4. 状态   5. 退出
-set /p M=请选择:
-if "%M%"=="5" exit /b 0
-if "%M%"=="4" goto :show_status
-if "%M%"=="3" goto :change_port
-if "%M%"=="2" goto :stop_server
-if "%M%"=="1" start http://%HOST%:%PORT%
+choice /c 12345 /n /m "请选择: "
+if errorlevel 5 exit /b 0
+if errorlevel 4 goto :show_status
+if errorlevel 3 goto :change_port
+if errorlevel 2 goto :stop_server
+start http://%HOST%:%PORT%
 goto :menu
 
 :change_port
-set /p PORT=新端口:
+echo 输入新端口:
+set /p "PORT=请输入端口: "
 if not defined PORT goto :menu
 taskkill /fi "WindowTitle eq Pi-Web" /f >nul 2>&1
 start "Pi-Web" "node_modules\.bin\next.cmd" start -p %PORT%

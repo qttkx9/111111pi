@@ -15,7 +15,7 @@ echo  3. 修改主机地址
 echo  4. 重置配置
 echo  5. 退出
 echo.
-set /p M=请选择 (1-5):
+set /p "M=请输入 (1-5): "
 if "%M%"=="5" exit /b 0
 if "%M%"=="4" goto :reset
 if "%M%"=="3" goto :host
@@ -38,7 +38,7 @@ pause
 goto :menu
 
 :port
-set /p NEWP=新端口 (默认30141):
+set /p "NEWP=新端口 (默认30141): "
 if not defined NEWP goto :menu
 echo %NEWP%| findstr /r "^[0-9][0-9]*$" >nul
 if errorlevel 1 (
@@ -54,7 +54,7 @@ pause
 goto :menu
 
 :host
-set /p NEWH=主机地址 (默认localhost):
+set /p "NEWH=主机地址 (默认localhost): "
 if not defined NEWH goto :menu
 echo @echo off> "%CFG_FILE%"
 echo set CFG_HOST=%NEWH%>> "%CFG_FILE%"
