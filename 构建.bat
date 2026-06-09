@@ -12,7 +12,7 @@ if %errorlevel% neq 0 (
 )
 node -v
 
-if not exist "%~dp0package.json" (
+if not exist "package.json" (
     echo 请在项目根目录运行
     pause
     exit /b 1
