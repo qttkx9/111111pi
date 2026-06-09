@@ -1,33 +1,67 @@
-# pi-web
+# pi-web-d
 
-[pi 编程智能体](https://github.com/badlogic/pi-mono) 的网页界面。在浏览器中浏览会话、与智能体对话、分叉对话、切换消息分支。
+> [pi 编程智能体](https://github.com/badlogic/pi-mono) 的网页界面 — 汉化增强版
+
+在浏览器中浏览会话、与智能体对话、分叉对话、切换消息分支。基于 [agegr/pi-web](https://github.com/agegr/pi-web) 进行了汉化和功能增强。
+
+---
 
 ## 快速开始
 
-**无需安装，直接运行：**
+### 首次部署
+
+**需要先安装 Node.js：** https://nodejs.org （下载左侧 LTS 版本）
 
 ```bash
-npx @agegr/pi-web@latest
+git clone https://github.com/qttkx9/pi-web-d.git
+cd pi-web-d
+双击 构建.bat      # 自动安装依赖 + 构建项目
 ```
 
-**或全局安装后使用：**
+### 日常使用
 
 ```bash
-npm install -g @agegr/pi-web
-pi-web
+双击 启动.bat       # 自动检测环境 → 启动服务 → 打开浏览器
 ```
 
-启动后打开 [http://localhost:30141](http://localhost:30141)。
+浏览器打开 [http://localhost:30141](http://localhost:30141) 即可使用。
 
-**可选参数：**
+### 修改设置
 
 ```bash
-pi-web --port 8080               # 自定义端口
-pi-web --hostname 127.0.0.1      # 仅本机访问
-pi-web -p 8080 -H 127.0.0.1     # 组合使用
-
-PORT=8080 pi-web                 # 也支持环境变量
+双击 设置.bat       # 修改端口、主机地址等
 ```
+
+---
+
+## 新增功能（相比原版）
+
+| 功能 | 说明 |
+|------|------|
+| **🌐 全界面汉化** | 按钮、标签、提示、错误信息全部中文显示 |
+| **🛒 扩展市场** | 浏览 pi.dev/packages 的扩展/技能包，按类型筛选、排序、分页、一键安装 |
+| **📊 费用统计** | 按时间/日期/会话查看 AI 调用费用，支持人民币显示 |
+| **💰 人民币显示** | 费用自动按汇率（1 USD = 7.24 CNY）转换为 ¥ 显示 |
+| **📂 已安装/扩展 分类管理** | 已安装的技能和扩展分开展示，支持 toggle 启用/禁用 |
+| **⌨️ CLI 命令支持** | 输入 `/` 开头的命令直接发送给 agent（如 /reload、/help 等） |
+| **🔀 分叉按钮常亮** | 消息上的分叉/编辑按钮一直可见，无需悬停 |
+| **📦 一键启动脚本** | 构建.bat / 启动.bat / 设置.bat，中文提示，检测环境自动处理 |
+
+---
+
+## 参数说明
+
+```bash
+启动.bat                          # 默认启动（端口 30141）
+启动.bat --port 8080              # 自定义端口
+启动.bat -p 8080                  # 简写
+启动.bat --host 0.0.0.0           # 允许局域网访问
+启动.bat --no-browser             # 不自动打开浏览器
+启动.bat status                   # 查看服务状态
+启动.bat stop                     # 停止服务
+```
+
+---
 
 ## 功能介绍
 
@@ -40,36 +74,66 @@ PORT=8080 pi-web                 # 也支持环境变量
 - **工具面板** — 控制智能体可使用的工具
 - **压缩会话** — 对长会话进行摘要，节省上下文窗口
 - **引导 / 追加** — 打断正在运行的智能体，或在其完成后追加消息
+- **扩展市场** — 浏览安装 Pi 生态的扩展和技能包
+- **费用统计** — 按会话/日期/模型查看详细费用消耗
+
+---
 
 ## 注意事项
 
 - **数据目录** — 默认读取 `~/.pi/agent/sessions` 下的会话文件。可通过环境变量 `PI_CODING_AGENT_DIR` 指定其他目录。
-- **模型配置** — 从智能体数据目录下的 `models.json` 读取可用模型，可在侧边栏的「Models」面板中编辑。
+- **模型配置** — 从智能体数据目录下的 `models.json` 读取可用模型，可在侧边栏的「模型」面板中编辑。
 - **文件浏览** — 侧边栏内置文件浏览器，可在标签页中查看当前工作目录下的文件。
+
+---
 
 ## 开发
 
 ```bash
 npm install
-npm run dev   # 端口 30141
+npm run dev       # 开发模式，端口 30141
+npm run build     # 构建生产版本
+npm start         # 启动生产版本
 ```
+
+---
 
 ## 项目结构
 
 ```
-app/
-  api/
-    sessions/      # 读写会话文件
-    agent/         # 发送命令、SSE 事件流
-    files/         # 文件内容读取
-    models/        # 可用模型列表与默认模型
-    models-config/ # 读写 models.json
-components/        # UI 组件
-lib/
-  session-reader.ts  # 解析 .jsonl 会话文件
-  rpc-manager.ts     # 管理 AgentSession 生命周期
-  normalize.ts       # 规范化 toolCall 字段名
-  types.ts
+pi-web-d/
+├─ 启动.bat               # 一键启动脚本
+├─ 构建.bat               # 首次构建脚本
+├─ 设置.bat               # 配置修改脚本
+├─ .next/                 # 构建产物
+├─ app/
+│   api/
+│     sessions/           # 读写会话文件
+│     agent/              # 发送命令、SSE 事件流
+│     files/              # 文件内容读取
+│     models/             # 可用模型列表与默认模型
+│     models-config/      # 读写 models.json
+│     packages/           # 扩展市场搜索与安装
+│     stats/              # 费用统计 API
+│     skills/             # 技能搜索与安装
+├─ components/            # UI 组件
+│   ├─ AppShell.tsx       # 主框架
+│   ├─ ChatInput.tsx      # 输入框（含 CLI 命令支持）
+│   ├─ ChatWindow.tsx     # 对话窗口
+│   ├─ SkillsConfig.tsx   # 技能/扩展管理（含扩展市场）
+│   ├─ CostStats.tsx      # 费用统计面板
+│   └─ ...
+├─ lib/
+│   ├─ i18n.ts            # 中文翻译字典
+│   ├─ currency.ts        # 货币汇率与格式化
+│   ├─ types.ts           # 类型定义
+│   ├─ session-reader.ts  # 解析 .jsonl 会话文件
+│   └─ ...
+└─ hooks/                 # React 自定义 Hook
 ```
 
-会话文件存储路径：`~/.pi/agent/sessions/<编码后的工作目录>/<时间戳>_<uuid>.jsonl`
+---
+
+## 许可证
+
+MIT License
