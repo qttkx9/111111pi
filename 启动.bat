@@ -23,6 +23,13 @@ shift & goto :parse_args
 
 cd /d "%~dp0"
 
+:: read config
+if exist "%~dp0pi-web-config.bat" (
+    call "%~dp0pi-web-config.bat"
+    if defined CFG_PORT set "PORT=%CFG_PORT%"
+    if defined CFG_HOST set "HOST=%CFG_HOST%"
+)
+
 :: check project
 if not exist "%~dp0package.json" (
     echo [ERROR] package.json not found
@@ -91,11 +98,11 @@ echo  2. Stop server
 echo  3. Change port
 echo  4. Check status
 echo  5. Exit
-choice /c 12345 /n /m "Select (1-5): "
-if errorlevel 5 exit /b 0
-if errorlevel 4 goto :show_status
-if errorlevel 3 goto :change_port
-if errorlevel 2 goto :stop_server
+set /p "MENU=Select (1-5): "
+if "%MENU%"=="5" exit /b 0
+if "%MENU%"=="4" goto :show_status
+if "%MENU%"=="3" goto :change_port
+if "%MENU%"=="2" goto :stop_server
 start http://%HOST%:%PORT%
 goto :menu
 
