@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul 2>&1
 title Pi Web 设置
 
 set CFG_FILE=%~dp0pi-web-config.bat
