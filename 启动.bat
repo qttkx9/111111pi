@@ -1,156 +1,118 @@
 @echo off
-chcp 65001 >nul 2>&1
-title Pi Web
+title Pi Web 启动器
 
-set "PORT=30141"
-set "HOST=localhost"
-set "AUTO_OPEN=true"
+set PORT=30141
+set HOST=localhost
+set AUTO_OPEN=true
 
-:: parse args
+cd /d "%~dp0"
+
+:: 读取配置
+if exist "%~dp0pi-web-config.bat" (
+    call "%~dp0pi-web-config.bat"
+    if defined CFG_PORT set PORT=%CFG_PORT%
+    if defined CFG_HOST set HOST=%CFG_HOST%
+)
+
+:: 解析参数
 :parse_args
 if "%~1"=="" goto :end_parse
-if /i "%~1"=="--port" set "PORT=%~2" & shift & shift & goto :parse_args
-if /i "%~1"=="-p" set "PORT=%~2" & shift & shift & goto :parse_args
-if /i "%~1"=="--host" set "HOST=%~2" & shift & shift & goto :parse_args
-if /i "%~1"=="-H" set "HOST=%~2" & shift & shift & goto :parse_args
-if /i "%~1"=="--no-browser" set "AUTO_OPEN=false" & shift & goto :parse_args
+if /i "%~1"=="--port" set PORT=%~2& shift& shift& goto :parse_args
+if /i "%~1"=="-p" set PORT=%~2& shift& shift& goto :parse_args
+if /i "%~1"=="--host" set HOST=%~2& shift& shift& goto :parse_args
+if /i "%~1"=="-H" set HOST=%~2& shift& shift& goto :parse_args
+if /i "%~1"=="--no-browser" set AUTO_OPEN=false& shift& goto :parse_args
 if /i "%~1"=="status" goto :show_status
 if /i "%~1"=="stop" goto :stop_server
 if /i "%~1"=="--help" goto :show_help
 if /i "%~1"=="-h" goto :show_help
-shift & goto :parse_args
+shift& goto :parse_args
 :end_parse
 
-cd /d "%~dp0"
-
-:: read config
-if exist "%~dp0pi-web-config.bat" (
-    call "%~dp0pi-web-config.bat"
-    if defined CFG_PORT set "PORT=%CFG_PORT%"
-    if defined CFG_HOST set "HOST=%CFG_HOST%"
-)
-
-:: check project
+:: 1. 检测项目
 if not exist "%~dp0package.json" (
-    echo [ERROR] package.json not found
+    echo [错误] 未找到 package.json
     pause
     exit /b 1
 )
-
-:: check deps
+:: 2. 检测依赖
 if not exist "%~dp0node_modules\next\dist\bin\next" (
-    echo [ERROR] run: npm install
+    echo [错误] 请先运行: npm install
     pause
     exit /b 1
 )
-
-:: check build
+:: 3. 检测构建
 if not exist "%~dp0.next\BUILD_ID" (
-    echo [INFO] building...
+    echo [提示] 正在构建...
     call npx next build
     if errorlevel 1 (
-        echo [ERROR] build failed
+        echo [错误] 构建失败
         pause
         exit /b 1
     )
-    echo [OK] build done
+    echo 构建完成
 )
-
-:: check port
+:: 4. 检测端口
 netstat -ano | findstr ":%PORT% " >nul 2>&1
 if %errorlevel% equ 0 (
-    echo ================================
-    echo Port %PORT% is in use
-    echo ================================
     start http://%HOST%:%PORT%
     exit /b 0
 )
-
-:: start
-echo ================================
-echo   Pi Web
-echo ================================
-echo Port: %PORT%
-echo URL:  http://%HOST%:%PORT%
-echo Close this window to stop
-echo ================================
-
+:: 5. 启动
 start "Pi-Web" "%~dp0node_modules\.bin\next.cmd" start -p %PORT%
-
-:: wait then open browser
-if "%AUTO_OPEN%"=="true" (
-    echo Waiting for server...
-    :wait_loop
-    timeout /t 2 /nobreak >nul
-    curl -s http://%HOST%:%PORT% >nul 2>&1
-    if errorlevel 1 goto :wait_loop
-    start http://%HOST%:%PORT%
-    echo Browser opened
-)
+:: 6. 等待启动
+echo 正在启动...
+:wait_loop
+timeout /t 2 /nobreak >nul
+curl -s http://%HOST%:%PORT% >nul 2>&1
+if errorlevel 1 goto :wait_loop
+start http://%HOST%:%PORT%
+echo 已启动！
 
 :menu
-cls
-echo ================================
-echo   Pi Web Menu
-echo ================================
-echo  1. Open browser
-echo  2. Stop server
-echo  3. Change port
-echo  4. Check status
-echo  5. Exit
-set /p "MENU=Select (1-5): "
-if "%MENU%"=="5" exit /b 0
-if "%MENU%"=="4" goto :show_status
-if "%MENU%"=="3" goto :change_port
-if "%MENU%"=="2" goto :stop_server
-start http://%HOST%:%PORT%
+echo.
+echo 1. 打开页面  2. 停止服务  3. 更换端口  4. 查看状态  5. 退出
+set /p M=请选择:
+if "%M%"=="5" exit /b 0
+if "%M%"=="4" goto :show_status
+if "%M%"=="3" goto :change_port
+if "%M%"=="2" goto :stop_server
+if "%M%"=="1" start http://%HOST%:%PORT%
 goto :menu
 
 :change_port
-set /p "PORT=New port: "
+set /p PORT=新端口:
 if not defined PORT goto :menu
 taskkill /fi "WindowTitle eq Pi-Web" /f >nul 2>&1
 start "Pi-Web" "%~dp0node_modules\.bin\next.cmd" start -p %PORT%
-timeout /t 2 /nobreak >nul
-echo Switched to port %PORT%
+echo 已切换到端口 %PORT%
 pause
 goto :menu
 
 :stop_server
 taskkill /fi "WindowTitle eq Pi-Web" /f >nul 2>&1
-echo Server stopped
+echo 已停止
 pause
 exit /b 0
 
 :show_status
-cls
-echo Status check:
-echo - Project:   
-if exist "%~dp0package.json" (echo [OK]) else (echo [--])
-echo - npm deps: 
-if exist "%~dp0node_modules\next\dist\bin\next" (echo [OK]) else (echo [--])
-echo - Build:    
-if exist "%~dp0.next\BUILD_ID" (echo [OK]) else (echo [--])
-echo - Server:   
-tasklist /fi "WindowTitle eq Pi-Web" 2>nul | findstr "Pi-Web" >nul
-if %errorlevel% equ 0 (echo Running) else (echo Stopped)
+echo.
+if exist "%~dp0package.json" (echo [OK] 项目目录) else (echo [--] 项目目录)
+if exist "%~dp0node_modules\next\dist\bin\next" (echo [OK] 依赖) else (echo [--] 依赖)
+if exist "%~dp0.next\BUILD_ID" (echo [OK] 已构建) else (echo [--] 未构建)
+tasklist /fi "WindowTitle eq Pi-Web" 2>nul | findstr "Pi-Web" >nul && echo [OK] 服务运行中 || echo [--] 服务未运行
 echo.
 pause
 goto :menu
 
 :show_help
-echo Pi Web Launcher
 echo.
-echo Usage: 启动.bat [options] [command]
-echo.
-echo Options:
-echo   --port, -p PORT   Set port (default 30141)
-echo   --host, -H HOST   Set host address
-echo   --no-browser      Don't open browser
-echo.
-echo Commands:
-echo   status   Check status
-echo   stop     Stop server
+echo 用法: 启动.bat [选项]
+echo   --port, -p PORT   设置端口
+echo   --host, -H HOST   设置主机
+echo   --no-browser      不打开浏览器
+echo   status            查看状态
+echo   stop              停止服务
 echo.
 pause
 exit /b 0
